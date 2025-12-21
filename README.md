@@ -1,3 +1,5 @@
+# EVERYTHING HERE WAS DONE BY AI AND FREE FOR COPY
+
 # VSRG - Rhythm Game with Procedural Beatmap Generation
 
 [🇷🇺 Русский](#русский) | [🇬🇧 English](#english)
