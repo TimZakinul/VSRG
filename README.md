@@ -4,8 +4,6 @@
 
 [🇷🇺 Русский](#русский) | [🇬🇧 English](#english)
 
-![vsrg](vsrg.png)
-
 ---
 
 ## English
@@ -25,7 +23,9 @@ Vertical scrolling rhythm game like osu!mania / Piano Tiles with automatic note 
 - **Fullscreen mode** - native fullscreen support
 - **Video support** - play with video files, video plays in background (requires FFmpeg)
 
-### Build
+---
+
+### Linux Build
 
 Requires SFML 3.x:
 
@@ -33,9 +33,55 @@ Requires SFML 3.x:
 # Arch Linux
 sudo pacman -S sfml ffmpeg
 
+# Ubuntu/Debian
+sudo apt install libsfml-dev ffmpeg
+
 # Compile
 g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
 ```
+
+---
+
+### Windows Build
+
+#### Option 1: MSYS2 + MinGW (Recommended)
+
+1. Install [MSYS2](https://www.msys2.org/)
+
+2. Open MSYS2 MinGW64 terminal and install dependencies:
+```bash
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-sfml mingw-w64-x86_64-ffmpeg
+```
+
+3. Compile:
+```bash
+g++ -std=c++17 -O2 main.cpp -o vsrg.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
+```
+
+4. Run:
+```bash
+./vsrg.exe music.wav
+```
+
+#### Option 2: Visual Studio
+
+1. Install [Visual Studio](https://visualstudio.microsoft.com/) with C++ workload
+
+2. Download [SFML 3.x](https://www.sfml-dev.org/download.php) for Visual C++
+
+3. Download [FFmpeg](https://ffmpeg.org/download.html) and add to PATH
+
+4. Create new project, add main.cpp, configure SFML paths
+
+5. Build and run
+
+#### Windows Notes
+
+- For video support, install FFmpeg and add to PATH
+- Font path will auto-detect Windows fonts (C:\Windows\Fonts\arial.ttf)
+- Use forward slashes or escape backslashes in paths
+
+---
 
 ### Usage
 
@@ -87,41 +133,10 @@ Video: MP4, MKV, AVI, WEBM, MOV, FLV (requires FFmpeg)
 | Key | Action |
 |-----|--------|
 | D, F, J, K | Hit notes (4 lanes) |
-| ESC | Pause / Exit (on results screen) |
+| ESC | Pause / Exit |
 | +/- | Volume |
 | R | Restart (on results screen) |
 | SPACE | Start game |
-
-### Difficulties
-
-| Difficulty | Description |
-|------------|-------------|
-| VERY EASY | Minimal notes, no holds, for beginners |
-| EASY | Few notes, rare holds |
-| MEDIUM | Balanced |
-| HARD | Many notes, double notes |
-| EXTREME | Maximum notes, frequent doubles |
-
-### Ranks
-
-| Rank | Accuracy |
-|------|----------|
-| SS | 95%+ no misses |
-| S | 90%+ |
-| A | 80%+ |
-| B | 70%+ |
-| C | 60%+ |
-| D | 50%+ |
-| F | <50% |
-
-### Video Background
-
-When you load a video file:
-1. Audio is automatically extracted using FFmpeg
-2. Video plays in the background (dimmed)
-3. Notes are generated from the audio track
-
-Requirements: FFmpeg must be installed (`sudo pacman -S ffmpeg`)
 
 ---
 
@@ -132,110 +147,108 @@ Requirements: FFmpeg must be installed (`sudo pacman -S ffmpeg`)
 ### Возможности
 
 - **Автоматическая генерация карт** - анализ аудио и создание нот под бит
-- **4 дорожки** - управление клавишами D, F, J, K (фиксированный размер, по центру)
+- **4 дорожки** - управление клавишами D, F, J, K
 - **Hold-ноты** - длинные ноты, которые нужно зажимать
 - **5 уровней сложности** - от VERY EASY до EXTREME
 - **Авто-бот** - автоматическое прохождение
-- **Визуальные эффекты** - частицы, пульсация фона, динамический эквалайзер
+- **Визуальные эффекты** - частицы, пульсация фона, эквалайзер
 - **Система рангов** - SS, S, A, B, C, D, F
 - **Любой размер окна** - от 640x480 до 4K
-- **Полноэкранный режим** - нативная поддержка fullscreen
-- **Поддержка видео** - играй с видеофайлами, видео на фоне (требуется FFmpeg)
+- **Полноэкранный режим**
+- **Поддержка видео** - видео на фоне (требуется FFmpeg)
 
-### Компиляция
+---
 
-Требуется SFML 3.x:
+### Сборка на Linux
 
 ```bash
 # Arch Linux
 sudo pacman -S sfml ffmpeg
 
+# Ubuntu/Debian
+sudo apt install libsfml-dev ffmpeg
+
 # Компиляция
 g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
 ```
 
+---
+
+### Сборка на Windows
+
+#### Вариант 1: MSYS2 + MinGW (Рекомендуется) "Для Linux систем" 
+
+1. Установи [MSYS2](https://www.msys2.org/)
+
+2. Открой терминал MSYS2 MinGW64 и установи зависимости:
+```bash
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-sfml mingw-w64-x86_64-ffmpeg
+```
+
+3. Скомпилируй:
+```bash
+g++ -std=c++17 -O2 main.cpp -o vsrg.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
+```
+
+4. Запусти:
+```bash
+./vsrg.exe music.wav
+```
+
+#### Вариант 2: Visual Studio
+
+1. Установи [Visual Studio](https://visualstudio.microsoft.com/) с C++ компонентами
+
+2. Скачай [SFML 3.x](https://www.sfml-dev.org/download.php) для Visual C++
+
+3. Скачай [FFmpeg](https://ffmpeg.org/download.html) и добавь в PATH
+
+4. Создай проект, добавь main.cpp, настрой пути к SFML
+
+5. Собери и запусти
+
+#### Заметки для Windows
+
+- Для видео нужен FFmpeg в PATH
+- Шрифты автоматически ищутся в C:\Windows\Fonts\
+- Используй прямые слеши или экранируй обратные в путях
+
+---
+
 ### Запуск
 
 ```bash
-./vsrg <аудио_или_видео_файл> [опции]
+./vsrg <аудио_или_видео> [опции]
 ```
 
-#### Поддерживаемые форматы
+#### Форматы
 
 Аудио: WAV, OGG, FLAC (MP3 может работать)
-Видео: MP4, MKV, AVI, WEBM, MOV, FLV (требуется FFmpeg)
+Видео: MP4, MKV, AVI, WEBM, MOV, FLV (нужен FFmpeg)
 
 #### Опции
 
 | Опция | Описание |
 |-------|----------|
-| `slow` / `1` | Медленная скорость (200) |
-| `normal` / `2` | Обычная скорость (400) |
-| `fast` / `3` | Быстрая скорость (600) |
-| `extreme` / `4` | Экстремальная скорость (800) |
-| `<число>` | Своя скорость |
+| `slow` / `1` | Медленная скорость |
+| `normal` / `2` | Обычная скорость |
+| `fast` / `3` | Быстрая скорость |
+| `extreme` / `4` | Экстремальная скорость |
 | `very-easy` / `ve` | Очень лёгкая сложность |
-| `easy` / `e` | Лёгкая сложность |
-| `medium` / `m` | Средняя сложность (по умолчанию) |
+| `easy` / `e` | Лёгкая |
+| `medium` / `m` | Средняя (по умолчанию) |
 | `hard` / `h` | Сложная |
 | `extreme` / `x` | Экстремальная |
-| `auto` | Включить авто-бот |
-| `ШИРИНАxВЫСОТА` | Размер окна (например 1280x720) |
-| `fullscreen` / `fs` | Полноэкранный режим |
-
-#### Примеры
-
-```bash
-# Играть с аудио файлом
-./vsrg music.wav
-
-# Играть с видео файлом (видео на фоне)
-./vsrg video.mp4
-
-# Полный экран с видео
-./vsrg video.mp4 fullscreen hard
-
-# Авто-бот с видео
-./vsrg music_video.mkv auto extreme fs
-```
+| `auto` | Авто-бот |
+| `ШИРИНАxВЫСОТА` | Размер окна |
+| `fullscreen` / `fs` | Полный экран |
 
 ### Управление
 
 | Клавиша | Действие |
 |---------|----------|
-| D, F, J, K | Нажатие нот (4 дорожки) |
-| ESC | Пауза / Выход (на экране результатов) |
+| D, F, J, K | Нажатие нот |
+| ESC | Пауза / Выход |
 | +/- | Громкость |
-| R | Рестарт (на экране результатов) |
-| SPACE | Начать игру |
-
-### Сложности
-
-| Сложность | Описание |
-|-----------|----------|
-| VERY EASY | Минимум нот, без холдов, для новичков |
-| EASY | Мало нот, редкие холды |
-| MEDIUM | Сбалансированно |
-| HARD | Много нот, двойные ноты |
-| EXTREME | Максимум нот, частые двойные |
-
-### Ранги
-
-| Ранг | Точность |
-|------|----------|
-| SS | 95%+ без миссов |
-| S | 90%+ |
-| A | 80%+ |
-| B | 70%+ |
-| C | 60%+ |
-| D | 50%+ |
-| F | <50% |
-
-### Видео фон
-
-Когда загружаешь видео файл:
-1. Аудио автоматически извлекается через FFmpeg
-2. Видео играет на фоне (затемнённое)
-3. Ноты генерируются из аудио дорожки
-
-Требования: FFmpeg должен быть установлен (`sudo pacman -S ffmpeg`)
+| R | Рестарт |
+| SPACE | Старт |
