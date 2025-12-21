@@ -2,7 +2,8 @@
  * VSRG - Vertical Scrolling Rhythm Game with Procedural Beatmap Generation
  * Enhanced version with better beat detection and visual effects
  * 
- * Compile: g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+ * Compile (Linux): g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
+ * Compile (Windows/MSYS2): g++ -std=c++17 -O2 main.cpp -o vsrg.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
  * Run: ./vsrg music.wav [speed]
  * 
  * Video support requires FFmpeg installed
@@ -26,6 +27,13 @@
 #include <mutex>
 #include <atomic>
 #include <queue>
+
+// Windows compatibility
+#ifdef _WIN32
+    #define popen _popen
+    #define pclose _pclose
+    #include <cstdio>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -64,7 +72,12 @@ public:
         frameHeight = targetHeight;
         frameBuffer.resize(frameWidth * frameHeight * 4);
         
+        // Проверяем наличие ffmpeg (Linux: which, Windows: where)
+        #ifdef _WIN32
+        if (system("where ffmpeg > nul 2>&1") != 0) {
+        #else
         if (system("which ffmpeg > /dev/null 2>&1") != 0) {
+        #endif
             std::cerr << "FFmpeg not found, video background disabled\n";
             return false;
         }
@@ -889,10 +902,17 @@ public:
         
         window.setFramerateLimit(Config::FPS_LIMIT);
         
+        // Загрузка шрифта (Linux и Windows пути)
         if (font.openFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf")) {
             fontLoaded = true;
         } else if (font.openFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
             fontLoaded = true;
+        } else if (font.openFromFile("C:/Windows/Fonts/arial.ttf")) {
+            fontLoaded = true;  // Windows
+        } else if (font.openFromFile("C:/Windows/Fonts/segoeui.ttf")) {
+            fontLoaded = true;  // Windows альтернатива
+        } else if (font.openFromFile("arial.ttf")) {
+            fontLoaded = true;  // Локальный шрифт
         }
         
         recalculateLanePositions();
