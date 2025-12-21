@@ -44,7 +44,7 @@ g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system 
 
 ### Windows Build
 
-#### Option 1: MSYS2 + MinGW (Recommended)
+#### Option 1: MSYS2 + MinGW (Recommended) "For Linux System"
 
 1. Install [MSYS2](https://www.msys2.org/)
 
