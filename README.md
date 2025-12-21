@@ -42,47 +42,6 @@ g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system 
 
 ---
 
-### Windows Build
-
-#### Option 1: MSYS2 + MinGW (Recommended) "For Linux System"
-
-1. Install [MSYS2](https://www.msys2.org/)
-
-2. Open MSYS2 MinGW64 terminal and install dependencies:
-```bash
-pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-sfml mingw-w64-x86_64-ffmpeg
-```
-
-3. Compile:
-```bash
-g++ -std=c++17 -O2 main.cpp -o vsrg.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
-```
-
-4. Run:
-```bash
-./vsrg.exe music.wav
-```
-
-#### Option 2: Visual Studio
-
-1. Install [Visual Studio](https://visualstudio.microsoft.com/) with C++ workload
-
-2. Download [SFML 3.x](https://www.sfml-dev.org/download.php) for Visual C++
-
-3. Download [FFmpeg](https://ffmpeg.org/download.html) and add to PATH
-
-4. Create new project, add main.cpp, configure SFML paths
-
-5. Build and run
-
-#### Windows Notes
-
-- For video support, install FFmpeg and add to PATH
-- Font path will auto-detect Windows fonts (C:\Windows\Fonts\arial.ttf)
-- Use forward slashes or escape backslashes in paths
-
----
-
 ### Usage
 
 ```bash
@@ -174,46 +133,6 @@ g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system 
 
 ---
 
-### Сборка на Windows
-
-#### Вариант 1: MSYS2 + MinGW (Рекомендуется) "Для Linux систем" 
-
-1. Установи [MSYS2](https://www.msys2.org/)
-
-2. Открой терминал MSYS2 MinGW64 и установи зависимости:
-```bash
-pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-sfml mingw-w64-x86_64-ffmpeg
-```
-
-3. Скомпилируй:
-```bash
-g++ -std=c++17 -O2 main.cpp -o vsrg.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
-```
-
-4. Запусти:
-```bash
-./vsrg.exe music.wav
-```
-
-#### Вариант 2: Visual Studio
-
-1. Установи [Visual Studio](https://visualstudio.microsoft.com/) с C++ компонентами
-
-2. Скачай [SFML 3.x](https://www.sfml-dev.org/download.php) для Visual C++
-
-3. Скачай [FFmpeg](https://ffmpeg.org/download.html) и добавь в PATH
-
-4. Создай проект, добавь main.cpp, настрой пути к SFML
-
-5. Собери и запусти
-
-#### Заметки для Windows
-
-- Для видео нужен FFmpeg в PATH
-- Шрифты автоматически ищутся в C:\Windows\Fonts\
-- Используй прямые слеши или экранируй обратные в путях
-
----
 
 ### Запуск
 
