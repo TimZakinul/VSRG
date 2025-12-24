@@ -3,7 +3,7 @@
 
 CXX = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Wextra
-LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
 
 TARGET = vsrg
 SRC = main.cpp
