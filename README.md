@@ -6,7 +6,6 @@
 
 ![vsrg](vsrg.png)
 
-
 ---
 
 ## English
@@ -25,6 +24,8 @@ Vertical scrolling rhythm game like osu!mania / Piano Tiles with automatic note 
 - **Custom window size** - any resolution from 640x480 to 4K
 - **Fullscreen mode** - native fullscreen support
 - **Video support** - play with video files, video plays in background (requires FFmpeg)
+- **YouTube support** - paste YouTube URL directly, no download needed (requires yt-dlp)
+- **Clear mode** - play without visual effects for better focus
 
 ---
 
@@ -34,10 +35,10 @@ Requires SFML 3.x:
 
 ```bash
 # Arch Linux
-sudo pacman -S sfml ffmpeg
+sudo pacman -S sfml ffmpeg yt-dlp
 
 # Ubuntu/Debian
-sudo apt install libsfml-dev ffmpeg
+sudo apt install libsfml-dev ffmpeg yt-dlp
 
 # Compile
 g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
@@ -73,12 +74,16 @@ Video: MP4, MKV, AVI, WEBM, MOV, FLV (requires FFmpeg)
 | `auto` | Enable auto-bot |
 | `WIDTHxHEIGHT` | Window size (e.g. 1280x720) |
 | `fullscreen` / `fs` | Fullscreen mode |
+| `clear` | No visual effects (clean mode) |
 
 #### Examples
 
 ```bash
 # Play with audio file
 ./vsrg music.wav
+
+# Play from YouTube URL
+./vsrg "https://youtube.com/watch?v=xxx" 800 extreme
 
 # Play with video file (video shows in background)
 ./vsrg video.mp4
@@ -88,6 +93,9 @@ Video: MP4, MKV, AVI, WEBM, MOV, FLV (requires FFmpeg)
 
 # Auto-bot with video
 ./vsrg music_video.mkv auto extreme fs
+
+# Clear mode (no effects)
+./vsrg music.wav auto clear
 ```
 
 ### Controls
@@ -118,6 +126,8 @@ Video: MP4, MKV, AVI, WEBM, MOV, FLV (requires FFmpeg)
 - **Любой размер окна** - от 640x480 до 4K
 - **Полноэкранный режим**
 - **Поддержка видео** - видео на фоне (требуется FFmpeg)
+- **YouTube поддержка** - вставь ссылку YouTube напрямую (требуется yt-dlp)
+- **Clear режим** - игра без визуальных эффектов
 
 ---
 
@@ -125,17 +135,15 @@ Video: MP4, MKV, AVI, WEBM, MOV, FLV (requires FFmpeg)
 
 ```bash
 # Arch Linux
-sudo pacman -S sfml ffmpeg
+sudo pacman -S sfml ffmpeg yt-dlp
 
 # Ubuntu/Debian
-sudo apt install libsfml-dev ffmpeg
+sudo apt install libsfml-dev ffmpeg yt-dlp
 
 # Компиляция
 g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -pthread
 ```
-
 ---
-
 
 ### Запуск
 
@@ -164,6 +172,7 @@ g++ -std=c++17 -O2 main.cpp -o vsrg -lsfml-graphics -lsfml-window -lsfml-system 
 | `auto` | Авто-бот |
 | `ШИРИНАxВЫСОТА` | Размер окна |
 | `fullscreen` / `fs` | Полный экран |
+| `clear` | Без визуальных эффектов |
 
 ### Управление
 
