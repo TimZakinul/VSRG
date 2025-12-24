@@ -257,6 +257,124 @@ public:
 };
 
 // ============================================================================
+// YOUTUBE DOWNLOADER (requires yt-dlp)
+// ============================================================================
+
+class YouTubeDownloader {
+public:
+    static bool isYouTubeURL(const std::string& url) {
+        return url.find("youtube.com") != std::string::npos ||
+               url.find("youtu.be") != std::string::npos ||
+               url.find("youtube") != std::string::npos;
+    }
+    
+    static std::string downloadAudio(const std::string& url) {
+        // Проверяем наличие yt-dlp
+        #ifdef _WIN32
+        if (system("where yt-dlp > nul 2>&1") != 0) {
+        #else
+        if (system("which yt-dlp > /dev/null 2>&1") != 0) {
+        #endif
+            std::cerr << "yt-dlp not found! Install it:\n";
+            std::cerr << "  Arch: sudo pacman -S yt-dlp\n";
+            std::cerr << "  Ubuntu: sudo apt install yt-dlp\n";
+            std::cerr << "  pip: pip install yt-dlp\n";
+            return "";
+        }
+        
+        // Создаём временный файл
+        std::string tempAudio = "/tmp/vsrg_yt_" + std::to_string(std::hash<std::string>{}(url)) + ".wav";
+        
+        // Проверяем кэш
+        if (fs::exists(tempAudio)) {
+            std::cout << "Using cached YouTube audio: " << tempAudio << "\n";
+            return tempAudio;
+        }
+        
+        std::cout << "Downloading audio from YouTube...\n";
+        std::cout << "URL: " << url << "\n";
+        
+        // Скачиваем аудио через yt-dlp и конвертируем в wav
+        std::string cmd = "yt-dlp -x --audio-format wav -o \"" + tempAudio + "\" \"" + url + "\" 2>&1";
+        
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) {
+            std::cerr << "Failed to run yt-dlp\n";
+            return "";
+        }
+        
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), pipe)) {
+            std::cout << buffer;
+        }
+        
+        int result = pclose(pipe);
+        
+        // yt-dlp добавляет расширение, проверяем разные варианты
+        std::string actualFile = tempAudio;
+        if (!fs::exists(actualFile)) {
+            actualFile = tempAudio + ".wav";
+        }
+        if (!fs::exists(actualFile)) {
+            // Ищем файл с похожим именем
+            std::string baseName = "/tmp/vsrg_yt_" + std::to_string(std::hash<std::string>{}(url));
+            for (const auto& entry : fs::directory_iterator("/tmp")) {
+                std::string filename = entry.path().string();
+                if (filename.find(baseName) != std::string::npos) {
+                    actualFile = filename;
+                    break;
+                }
+            }
+        }
+        
+        if (!fs::exists(actualFile)) {
+            std::cerr << "Failed to download audio from YouTube\n";
+            return "";
+        }
+        
+        std::cout << "YouTube audio downloaded: " << actualFile << "\n";
+        return actualFile;
+    }
+    
+    // Скачать видео для фона
+    static std::string downloadVideo(const std::string& url) {
+        std::string tempVideo = "/tmp/vsrg_yt_video_" + std::to_string(std::hash<std::string>{}(url)) + ".mp4";
+        
+        if (fs::exists(tempVideo)) {
+            std::cout << "Using cached YouTube video: " << tempVideo << "\n";
+            return tempVideo;
+        }
+        
+        std::cout << "Downloading video from YouTube (for background)...\n";
+        
+        // Скачиваем видео в низком качестве для фона
+        std::string cmd = "yt-dlp -f 'bestvideo[height<=480]+bestaudio/best[height<=480]' --merge-output-format mp4 -o \"" + tempVideo + "\" \"" + url + "\" 2>&1";
+        
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) return "";
+        
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), pipe)) {
+            std::cout << buffer;
+        }
+        pclose(pipe);
+        
+        if (!fs::exists(tempVideo)) {
+            // Пробуем без merge
+            cmd = "yt-dlp -f 'best[height<=480]' -o \"" + tempVideo + "\" \"" + url + "\" 2>&1";
+            system(cmd.c_str());
+        }
+        
+        if (fs::exists(tempVideo)) {
+            std::cout << "YouTube video downloaded: " << tempVideo << "\n";
+            return tempVideo;
+        }
+        
+        return "";
+    }
+};
+
+// ============================================================================
 // CONFIGURATION
 // ============================================================================
 
@@ -296,6 +414,7 @@ namespace Config {
     enum class Difficulty { VERY_EASY, EASY, MEDIUM, HARD, EXTREME };
     inline Difficulty difficulty = Difficulty::MEDIUM;
     inline bool autoPlay = false;
+    inline bool clearMode = false;  // режим без эффектов
     
     // Difficulty parameters
     struct DifficultyParams {
@@ -628,6 +747,7 @@ private:
     }
 };
 
+// ============================================================================
 // ============================================================================
 // HIT EFFECT
 // ============================================================================
@@ -1227,21 +1347,30 @@ private:
                     combo++;
                     perfectCount++;
                     maxCombo = std::max(maxCombo, combo);
-                    beatFlash.trigger(0.5f);
                     
                     float x = lanePositions[note.lane] + Config::LANE_WIDTH / 2;
+                    
+                    // Эффекты только если не clear режим
+                    if (!Config::clearMode) {
+                        beatFlash.trigger(0.5f);
+                        bgBars.trigger(0.8f, 1.5f);  // Активируем полоски для Auto
+                        particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Cyan, 20);
+                        
+                        if (combo > 0 && combo % 50 == 0) {
+                            particles.spawnComboExplosion(Config::WINDOW_WIDTH / 2, Config::WINDOW_HEIGHT / 2, combo / 50);
+                        }
+                    }
                     
                     if (note.isHoldNote()) {
                         note.holding = true;
                         autoHeld[note.lane] = true;
-                        hitEffects.emplace_back(note.lane, "AUTO", sf::Color::Cyan, 1.1f);
+                        if (!Config::clearMode) {
+                            hitEffects.emplace_back(note.lane, "AUTO", sf::Color::Cyan, 1.1f);
+                        }
                     } else {
-                        hitEffects.emplace_back(note.lane, "AUTO", sf::Color::Cyan, 1.2f);
-                    }
-                    particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Cyan, 20);
-                    
-                    if (combo > 0 && combo % 50 == 0) {
-                        particles.spawnComboExplosion(Config::WINDOW_WIDTH / 2, Config::WINDOW_HEIGHT / 2, combo / 50);
+                        if (!Config::clearMode) {
+                            hitEffects.emplace_back(note.lane, "AUTO", sf::Color::Cyan, 1.2f);
+                        }
                     }
                 }
             }
@@ -1272,41 +1401,53 @@ private:
             score += Config::PERFECT_SCORE;
             combo++;
             perfectCount++;
-            beatFlash.trigger(0.5f);
-            bgBars.trigger(0.8f, 1.5f);
             
-            if (closest->isHoldNote()) {
-                closest->holding = true;
-                hitEffects.emplace_back(lane, "HOLD!", sf::Color::Cyan, 1.1f);
+            if (!Config::clearMode) {
+                beatFlash.trigger(0.5f);
+                bgBars.trigger(0.8f, 1.5f);
+                particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Cyan, 20);
+                
+                if (closest->isHoldNote()) {
+                    closest->holding = true;
+                    hitEffects.emplace_back(lane, "HOLD!", sf::Color::Cyan, 1.1f);
+                } else {
+                    hitEffects.emplace_back(lane, "PERFECT", sf::Color::Cyan, 1.2f);
+                }
+                
+                // Combo explosion every 50
+                if (combo > 0 && combo % 50 == 0) {
+                    particles.spawnComboExplosion(Config::WINDOW_WIDTH / 2, Config::WINDOW_HEIGHT / 2, combo / 50);
+                }
             } else {
-                hitEffects.emplace_back(lane, "PERFECT", sf::Color::Cyan, 1.2f);
-            }
-            particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Cyan, 20);
-            
-            // Combo explosion every 50
-            if (combo > 0 && combo % 50 == 0) {
-                particles.spawnComboExplosion(Config::WINDOW_WIDTH / 2, Config::WINDOW_HEIGHT / 2, combo / 50);
+                if (closest->isHoldNote()) closest->holding = true;
             }
         }
         else if (closestDiff <= Config::GOOD_WINDOW) {
             score += Config::GOOD_SCORE;
             combo++;
             goodCount++;
-            beatFlash.trigger(0.3f);
-            bgBars.trigger(0.5f, 1.0f);
             
-            if (closest->isHoldNote()) {
-                closest->holding = true;
-                hitEffects.emplace_back(lane, "HOLD!", sf::Color::Green);
+            if (!Config::clearMode) {
+                beatFlash.trigger(0.3f);
+                bgBars.trigger(0.5f, 1.0f);
+                particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Green, 12);
+                
+                if (closest->isHoldNote()) {
+                    closest->holding = true;
+                    hitEffects.emplace_back(lane, "HOLD!", sf::Color::Green);
+                } else {
+                    hitEffects.emplace_back(lane, "GOOD", sf::Color::Green);
+                }
             } else {
-                hitEffects.emplace_back(lane, "GOOD", sf::Color::Green);
+                if (closest->isHoldNote()) closest->holding = true;
             }
-            particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Green, 12);
         }
         else {
             combo = 0;
             missCount++;
-            hitEffects.emplace_back(lane, "MISS", sf::Color::Red);
+            if (!Config::clearMode) {
+                hitEffects.emplace_back(lane, "MISS", sf::Color::Red);
+            }
             if (closest->isHoldNote()) closest->holdFailed = true;
         }
         
@@ -1326,20 +1467,24 @@ private:
                     holdCount++;
                     maxCombo = std::max(maxCombo, combo);
                     
-                    float x = lanePositions[lane] + Config::LANE_WIDTH / 2;
-                    if (diff <= Config::PERFECT_WINDOW) {
-                        hitEffects.emplace_back(lane, "PERFECT!", sf::Color::Magenta, 1.3f);
-                        particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Magenta, 30);
-                    } else {
-                        hitEffects.emplace_back(lane, "HOLD OK!", sf::Color::Green, 1.1f);
-                        particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Green, 20);
+                    if (!Config::clearMode) {
+                        float x = lanePositions[lane] + Config::LANE_WIDTH / 2;
+                        if (diff <= Config::PERFECT_WINDOW) {
+                            hitEffects.emplace_back(lane, "PERFECT!", sf::Color::Magenta, 1.3f);
+                            particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Magenta, 30);
+                        } else {
+                            hitEffects.emplace_back(lane, "HOLD OK!", sf::Color::Green, 1.1f);
+                            particles.spawnHitParticles(x, Config::HIT_LINE_Y, sf::Color::Green, 20);
+                        }
                     }
                 } else if (currentTime < n.endTimestamp) {
                     n.holdFailed = true;
                     n.holding = false;
                     combo = 0;
                     missCount++;
-                    hitEffects.emplace_back(lane, "TOO EARLY!", sf::Color::Red);
+                    if (!Config::clearMode) {
+                        hitEffects.emplace_back(lane, "TOO EARLY!", sf::Color::Red);
+                    }
                 }
                 break;
             }
@@ -1350,26 +1495,35 @@ private:
     // ========== RENDERING ==========
     
     void render() {
-        // Background with beat flash
+        // Background with beat flash (только если не clear режим)
         sf::Color bg = Config::BG_COLOR;
-        bg.r = std::min(255, static_cast<int>(bg.r + beatFlash.intensity * 40));
-        bg.g = std::min(255, static_cast<int>(bg.g + beatFlash.intensity * 30));
-        bg.b = std::min(255, static_cast<int>(bg.b + beatFlash.bassIntensity * 60));
+        if (!Config::clearMode) {
+            bg.r = std::min(255, static_cast<int>(bg.r + beatFlash.intensity * 40));
+            bg.g = std::min(255, static_cast<int>(bg.g + beatFlash.intensity * 30));
+            bg.b = std::min(255, static_cast<int>(bg.b + beatFlash.bassIntensity * 60));
+        }
         window.clear(bg);
         
-        // Video background (if enabled)
-        if (videoBackground.enabled) {
+        // Video background (if enabled and not clear mode)
+        if (videoBackground.enabled && !Config::clearMode) {
             videoBackground.render(window, 0.7f);  // 70% затемнение
         }
         
-        // Dynamic background bars
-        bgBars.render(window);
+        // Dynamic background bars (только если не clear режим)
+        if (!Config::clearMode) {
+            bgBars.render(window);
+        }
         
         renderLanes();
         renderNotes();
         renderHitLine();
-        particles.render(window);
-        renderHitEffects();
+        
+        // Частицы и эффекты только если не clear режим
+        if (!Config::clearMode) {
+            particles.render(window);
+            renderHitEffects();
+        }
+        
         renderUI();
         
         if (paused) renderPauseMenu();
@@ -1721,7 +1875,7 @@ private:
         std::string rank;
         sf::Color rankColor;
         if (acc >= 95 && missCount == 0) {
-            rank = "SS"; rankColor = sf::Color(255, 215, 0);  // золотой
+            rank = "SS"; rankColor = sf::Color(255, 215, 0);
         } else if (acc >= 90) {
             rank = "S"; rankColor = sf::Color(255, 200, 50);
         } else if (acc >= 80) {
@@ -1859,23 +2013,26 @@ int main(int argc, char* argv[]) {
     std::cout << "=== VSRG - Rhythm Game ===\n\n";
     
     if (argc < 2) {
-        std::cout << "Usage: " << argv[0] << " <audio_file> [options]\n\n";
+        std::cout << "Usage: " << argv[0] << " <audio_file_or_youtube_url> [options]\n\n";
         std::cout << "Options:\n";
         std::cout << "  Speed: slow(1), normal(2), fast(3), extreme(4), or number\n";
         std::cout << "  Difficulty: very-easy, easy, medium, hard, extreme\n";
         std::cout << "  Window: WIDTHxHEIGHT (e.g. 1280x720, 1920x1080)\n";
         std::cout << "  fullscreen / fs - fullscreen mode\n";
-        std::cout << "  auto - enable auto-play bot\n\n";
+        std::cout << "  auto - enable auto-play bot\n";
+        std::cout << "  clear - no visual effects (clean mode)\n\n";
         std::cout << "Examples:\n";
         std::cout << "  " << argv[0] << " music.wav fast hard\n";
-        std::cout << "  " << argv[0] << " music.wav fullscreen extreme\n";
-        std::cout << "  " << argv[0] << " music.wav 1920x1080 hard\n";
+        std::cout << "  " << argv[0] << " https://youtube.com/watch?v=xxx 800 extreme\n";
+        std::cout << "  " << argv[0] << " music.wav auto clear\n";
         std::cout << "  " << argv[0] << " music.wav fs auto\n\n";
         std::cout << "Controls: D F J K | ESC=pause | +/-=volume\n";
         return 1;
     }
     
-    // Парсим аргументы (порядок не важен)
+    std::string inputPath = argv[1];
+    
+    // Парсим аргументы
     for (int i = 2; i < argc; ++i) {
         std::string arg = argv[i];
         std::string lower = arg;
@@ -1900,6 +2057,8 @@ int main(int argc, char* argv[]) {
         
         if (lower == "auto") {
             Config::autoPlay = true;
+        } else if (lower == "clear" || lower == "clean" || lower == "noeffects") {
+            Config::clearMode = true;
         } else if (lower == "fullscreen" || lower == "fs" || lower == "full") {
             Config::fullscreen = true;
         } else if (lower == "very-easy" || lower == "veryeasy" || lower == "ve" || lower == "beginner") {
@@ -1914,12 +2073,39 @@ int main(int argc, char* argv[]) {
             Config::difficulty = Config::Difficulty::EXTREME;
         } else {
             // Пробуем как скорость
-            Config::SCROLL_SPEED = parseSpeed(arg);
+            try {
+                float speed = std::stof(arg);
+                if (speed > 0) {
+                    Config::SCROLL_SPEED = speed;
+                }
+            } catch (...) {}
+        }
+    }
+    
+    // Проверяем, является ли это YouTube ссылкой
+    if (YouTubeDownloader::isYouTubeURL(inputPath)) {
+        std::cout << "YouTube URL detected!\n";
+        
+        // Скачиваем аудио
+        std::string audioPath = YouTubeDownloader::downloadAudio(inputPath);
+        if (audioPath.empty()) {
+            std::cerr << "Failed to download from YouTube\n";
+            return 1;
+        }
+        inputPath = audioPath;
+        
+        // Опционально скачиваем видео для фона (если не clear режим)
+        if (!Config::clearMode) {
+            std::string videoPath = YouTubeDownloader::downloadVideo(argv[1]);
+            if (!videoPath.empty()) {
+                // Видео будет использоваться как фон
+                // Сохраняем путь для VideoBackground
+            }
         }
     }
     
     Game game;
-    if (!game.loadAudio(argv[1])) return 1;
+    if (!game.loadAudio(inputPath)) return 1;
     
     std::cout << "Window: " << Config::WINDOW_WIDTH << "x" << Config::WINDOW_HEIGHT;
     if (Config::fullscreen) std::cout << " (fullscreen)";
@@ -1927,6 +2113,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Speed: " << Config::SCROLL_SPEED << "\n";
     std::cout << "Difficulty: " << Config::getDifficultyName() << "\n";
     if (Config::autoPlay) std::cout << "Auto-play: ENABLED\n";
+    if (Config::clearMode) std::cout << "Clear mode: ENABLED (no effects)\n";
     std::cout << "\nPress SPACE to start!\n";
     game.run();
     
